@@ -11,7 +11,7 @@ Class {
 { #category : 'initialization' }
 Game2048Board >> initialize [
 	board := #(
-		#(0 0 0 0)
+		#(1 2 0 0)
 		#(0 0 0 0)
 		#(0 0 0 0)
 		#(0 0 0 0)
