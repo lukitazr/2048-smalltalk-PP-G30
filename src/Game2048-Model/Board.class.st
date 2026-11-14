@@ -1,5 +1,5 @@
 Class {
-	#name : 'Game2048Board',
+	#name : 'Board',
 	#superclass : 'Object',
 	#instVars : [
 		'board'
@@ -9,7 +9,7 @@ Class {
 }
 
 { #category : 'initialization' }
-Game2048Board >> initialize [
+Board >> initialize [
 	board := {
 		{0 . 0 . 0 . 0} .
 		{0 . 0 . 0 . 0} .
@@ -19,7 +19,7 @@ Game2048Board >> initialize [
 ]
 
 { #category : 'operation' }
-Game2048Board >> insertarBloque: unBloque posicion: tuplaPosicion [
+Board >> insertarBloque: unBloque posicion: tuplaPosicion [
 	|x y|
 	x := tuplaPosicion first. 
 	y := tuplaPosicion last.
@@ -36,6 +36,6 @@ Game2048Board >> insertarBloque: unBloque posicion: tuplaPosicion [
 ]
 
 { #category : 'operation' }
-Game2048Board >> ver [
+Board >> ver [
 	^ board
 ]

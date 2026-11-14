@@ -1,5 +1,5 @@
 Class {
-	#name : 'Game2048Block',
+	#name : 'Block',
 	#superclass : 'Object',
 	#instVars : [
 		'numero',
@@ -10,17 +10,17 @@ Class {
 }
 
 { #category : 'initialization' }
-Game2048Block >> initialize [
+Block >> initialize [
 	numero := 2.
 	color := 'blanco'
 ]
 
 { #category : 'operation' }
-Game2048Block >> valor [
+Block >> valor [
 	^ numero
 ]
 
 { #category : 'operation' }
-Game2048Block >> ver [
+Block >> ver [
 	^ { numero . color }
 ]
