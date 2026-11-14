@@ -16,6 +16,11 @@ Game2048Block >> initialize [
 ]
 
 { #category : 'operation' }
+Game2048Block >> valor [
+	^ numero
+]
+
+{ #category : 'operation' }
 Game2048Block >> ver [
 	^ { numero . color }
 ]
