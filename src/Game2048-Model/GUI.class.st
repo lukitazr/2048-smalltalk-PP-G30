@@ -5,7 +5,10 @@ Class {
 		'reglas',
 		'fuenteTitulo',
 		'fuenteNormal',
-		'fuenteFicha'
+		'fuenteFicha',
+		'trayectorias',
+		'inicioAnimacion',
+		'direccionPendiente'
 	],
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
@@ -78,16 +81,14 @@ GUI >> drawOn: canvas [
 	canvas fillRectangle: self areaReinicio color: (Color r: 0.20 g: 0.32 b: 0.48).
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio
 		fuente: fuenteNormal color: Color white canvas: canvas.
-	1 to: tablero size do: [ :fila |
-		1 to: tablero size do: [ :columna |
-			self dibujarFicha: (tablero valorEn: fila @ columna)
-				en: (self areaFichaFila: fila columna: columna) canvas: canvas ] ].
+	self dibujarTablero: tablero en: canvas.
 	estado := 'Usá las flechas para mover las fichas.'.
-	reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
-	reglas termino ifTrue: [
-		estado := reglas gano
-			ifTrue: [ 'Llegaste a 2048. Partida terminada.' ]
-			ifFalse: [ 'Sin movimientos. Reiniciá para volver a jugar.' ] ].
+	trayectorias ifNil: [
+		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
+		reglas termino ifTrue: [
+			estado := reglas gano
+				ifTrue: [ 'Llegaste a 2048. Partida terminada.' ]
+				ifFalse: [ 'Sin movimientos. Reiniciá para volver a jugar.' ] ] ].
 	canvas drawString: estado at: origen + (20 @ 458) font: fuenteNormal color: Color white
 ]
 
@@ -118,7 +119,7 @@ GUI >> keyDown: evento [
 	tecla := evento key.
 	direccion := self direccionParaTecla: tecla.
 	direccion ifNil: [ ^ super keyDown: evento ].
-	(reglas mover: direccion) ifTrue: [ self changed ].
+	self mover: direccion.
 	^ true
 ]
 
@@ -140,6 +141,84 @@ GUI >> mouseDown: evento [
 
 { #category : 'operation' }
 GUI >> reiniciar [
+	trayectorias := nil.
+	direccionPendiente := nil.
+	self stopStepping.
 	reglas reiniciar.
 	self changed
+]
+
+
+{ #category : 'drawing' }
+GUI >> dibujarTablero: tablero en: canvas [
+	1 to: tablero size do: [ :fila |
+		1 to: tablero size do: [ :columna |
+			| valor |
+			valor := trayectorias
+				ifNil: [ tablero valorEn: fila @ columna ]
+				ifNotNil: [ 0 ].
+			self dibujarFicha: valor
+				en: (self areaFichaFila: fila columna: columna) canvas: canvas ] ].
+	trayectorias ifNotNil: [ self dibujarFichasEnMovimientoEn: canvas ]
+]
+
+{ #category : 'drawing' }
+GUI >> dibujarFichasEnMovimientoEn: canvas [
+	| avance |
+	avance := ((Time millisecondsSince: inicioAnimacion) / self duracionAnimacion) min: 1.
+	avance := 1 - (1 - avance) squared.
+	trayectorias do: [ :trayectoria |
+		| origen destino area areaDestino desplazamiento |
+		origen := trayectoria second.
+		destino := trayectoria third.
+		area := self areaFichaFila: origen x columna: origen y.
+		areaDestino := self areaFichaFila: destino x columna: destino y.
+		desplazamiento := (areaDestino origin - area origin) * avance.
+		self dibujarFicha: trayectoria first
+			en: (area translateBy: desplazamiento rounded) canvas: canvas ]
+]
+
+{ #category : 'operation' }
+GUI >> mover: direccion [
+	| movimientos |
+	trayectorias ifNotNil: [
+		direccionPendiente := direccion.
+		^ self ].
+	movimientos := OrderedCollection new.
+	(reglas mover: direccion registrando: [ :valor :origen :destino |
+		movimientos add: { valor. origen. destino } ]) ifFalse: [ ^ self ].
+	trayectorias := movimientos.
+	inicioAnimacion := Time millisecondClockValue.
+	self startStepping.
+	self changed
+]
+
+{ #category : 'stepping' }
+GUI >> duracionAnimacion [
+	^ 120
+]
+
+{ #category : 'stepping' }
+GUI >> stepTime [
+	^ 16
+]
+
+{ #category : 'stepping' }
+GUI >> step [
+	| siguiente |
+	trayectorias ifNil: [
+		self stopStepping.
+		^ self ].
+	(Time millisecondsSince: inicioAnimacion) >= self duracionAnimacion ifTrue: [
+		trayectorias := nil.
+		self stopStepping.
+		siguiente := direccionPendiente.
+		direccionPendiente := nil.
+		siguiente ifNotNil: [ self mover: siguiente ] ].
+	self changed
+]
+
+{ #category : 'stepping' }
+GUI >> wantsSteps [
+	^ trayectorias notNil
 ]

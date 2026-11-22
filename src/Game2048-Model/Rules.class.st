@@ -29,22 +29,25 @@ Rules >> board [
 
 { #category : 'private' }
 Rules >> combinar: unaLinea [
-	| fichas resultado lectura escritura puntos valor |
-	fichas := unaLinea reject: [ :cadaValor | cadaValor = 0 ].
+	| fichas resultado destinos lectura escritura puntos valor |
+	fichas := (1 to: unaLinea size) select: [ :indice | (unaLinea at: indice) ~= 0 ].
+	destinos := Array new: unaLinea size.
 	resultado := Array new: unaLinea size withAll: 0.
 	lectura := 1.
 	escritura := 1.
 	puntos := 0.
 	[ lectura <= fichas size ] whileTrue: [
-		valor := fichas at: lectura.
+		valor := unaLinea at: (fichas at: lectura).
+		destinos at: (fichas at: lectura) put: escritura.
 		lectura := lectura + 1.
-		(lectura <= fichas size and: [ (fichas at: lectura) = valor ]) ifTrue: [
+		(lectura <= fichas size and: [ (unaLinea at: (fichas at: lectura)) = valor ]) ifTrue: [
 			valor := valor * 2.
 			puntos := puntos + valor.
+			destinos at: (fichas at: lectura) put: escritura.
 			lectura := lectura + 1 ].
 		resultado at: escritura put: valor.
 		escritura := escritura + 1 ].
-	^ { resultado. puntos }
+	^ { resultado. puntos. destinos }
 ]
 
 { #category : 'testing' }
@@ -61,6 +64,11 @@ Rules >> initialize [
 
 { #category : 'operation' }
 Rules >> mover: direccion [
+	^ self mover: direccion registrando: nil
+]
+
+{ #category : 'operation' }
+Rules >> mover: direccion registrando: registrarFicha [
 	| cambio posiciones original resultado valores |
 	(#(izquierda derecha arriba abajo) includes: direccion) ifFalse: [ ^ false ].
 	cambio := false.
@@ -69,6 +77,13 @@ Rules >> mover: direccion [
 		original := posiciones collect: [ :posicion | board valorEn: posicion ].
 		resultado := self combinar: original.
 		valores := resultado first.
+		registrarFicha ifNotNil: [
+			resultado third withIndexDo: [ :destino :origen |
+				destino ifNotNil: [
+					registrarFicha
+						value: (original at: origen)
+						value: (posiciones at: origen)
+						value: (posiciones at: destino) ] ] ].
 		valores ~= original ifTrue: [
 			cambio := true.
 			puntaje := puntaje + resultado second.
