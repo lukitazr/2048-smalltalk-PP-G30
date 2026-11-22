@@ -1,25 +1,25 @@
 Class {
 	#name : 'Rules',
 	#superclass : 'Object',
-	#instVars : [ 'board', 'puntaje', 'gano', 'azar' ],
+	#instVars : [
+		'board',
+		'puntaje',
+		'gano',
+		'azar'
+	],
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
 }
 
-{ #category : 'initialization' }
-Rules >> initialize [
-	super initialize.
-	azar := Random new.
-	self reiniciar
-]
-
-{ #category : 'operation' }
-Rules >> reiniciar [
-	board := Board new.
-	puntaje := 0.
-	gano := false.
-	self agregarFicha.
-	self agregarFicha
+{ #category : 'private' }
+Rules >> agregarFicha [
+	| vacias valor posicion |
+	vacias := board posicionesVacias.
+	vacias ifEmpty: [ ^ self ].
+	valor := (azar nextInteger: 10) = 1 ifTrue: [ 4 ] ifFalse: [ 2 ].
+	posicion := vacias at: (azar nextInteger: vacias size).
+	board insertarBloque: (Block conValor: valor)
+		posicion: { posicion x. posicion y }
 ]
 
 { #category : 'accessing' }
@@ -27,9 +27,24 @@ Rules >> board [
 	^ board
 ]
 
-{ #category : 'accessing' }
-Rules >> puntaje [
-	^ puntaje
+{ #category : 'private' }
+Rules >> combinar: unaLinea [
+	| fichas resultado lectura escritura puntos valor |
+	fichas := unaLinea reject: [ :cadaValor | cadaValor = 0 ].
+	resultado := Array new: unaLinea size withAll: 0.
+	lectura := 1.
+	escritura := 1.
+	puntos := 0.
+	[ lectura <= fichas size ] whileTrue: [
+		valor := fichas at: lectura.
+		lectura := lectura + 1.
+		(lectura <= fichas size and: [ (fichas at: lectura) = valor ]) ifTrue: [
+			valor := valor * 2.
+			puntos := puntos + valor.
+			lectura := lectura + 1 ].
+		resultado at: escritura put: valor.
+		escritura := escritura + 1 ].
+	^ { resultado. puntos }
 ]
 
 { #category : 'testing' }
@@ -37,14 +52,11 @@ Rules >> gano [
 	^ gano
 ]
 
-{ #category : 'testing' }
-Rules >> termino [
-	^ (#(izquierda derecha arriba abajo) anySatisfy: [ :direccion |
-		(1 to: board size) anySatisfy: [ :indice |
-			| original |
-			original := (self posicionesDeLinea: indice direccion: direccion)
-				collect: [ :posicion | board valorEn: posicion ].
-			original ~= (self combinar: original) first ] ]) not
+{ #category : 'initialization' }
+Rules >> initialize [
+	super initialize.
+	azar := Random new.
+	self reiniciar
 ]
 
 { #category : 'operation' }
@@ -78,33 +90,26 @@ Rules >> posicionesDeLinea: indice direccion: direccion [
 		[ #abajo ] -> [ indices reversed collect: [ :fila | fila @ indice ] ] }
 ]
 
-{ #category : 'private' }
-Rules >> combinar: unaLinea [
-	| fichas resultado lectura escritura puntos valor |
-	fichas := unaLinea reject: [ :cadaValor | cadaValor = 0 ].
-	resultado := Array new: unaLinea size withAll: 0.
-	lectura := 1.
-	escritura := 1.
-	puntos := 0.
-	[ lectura <= fichas size ] whileTrue: [
-		valor := fichas at: lectura.
-		lectura := lectura + 1.
-		(lectura <= fichas size and: [ (fichas at: lectura) = valor ]) ifTrue: [
-			valor := valor * 2.
-			puntos := puntos + valor.
-			lectura := lectura + 1 ].
-		resultado at: escritura put: valor.
-		escritura := escritura + 1 ].
-	^ { resultado. puntos }
+{ #category : 'accessing' }
+Rules >> puntaje [
+	^ puntaje
 ]
 
-{ #category : 'private' }
-Rules >> agregarFicha [
-	| vacias valor posicion |
-	vacias := board posicionesVacias.
-	vacias ifEmpty: [ ^ self ].
-	valor := (azar nextInteger: 10) = 1 ifTrue: [ 4 ] ifFalse: [ 2 ].
-	posicion := vacias at: (azar nextInteger: vacias size).
-	board insertarBloque: (Block conValor: valor)
-		posicion: { posicion x. posicion y }
+{ #category : 'operation' }
+Rules >> reiniciar [
+	board := Board new.
+	puntaje := 0.
+	gano := false.
+	self agregarFicha.
+	self agregarFicha
+]
+
+{ #category : 'testing' }
+Rules >> termino [
+	^ (#(izquierda derecha arriba abajo) anySatisfy: [ :direccion |
+		(1 to: board size) anySatisfy: [ :indice |
+			| original |
+			original := (self posicionesDeLinea: indice direccion: direccion)
+				collect: [ :posicion | board valorEn: posicion ].
+			original ~= (self combinar: original) first ] ]) not
 ]

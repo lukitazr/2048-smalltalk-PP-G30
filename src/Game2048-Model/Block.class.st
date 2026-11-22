@@ -9,6 +9,11 @@ Class {
 	#package : 'Game2048-Model'
 }
 
+{ #category : 'instance creation' }
+Block class >> conValor: unNumero [
+	^ self new valor: unNumero
+]
+
 { #category : 'initialization' }
 Block >> initialize [
 	numero := 2.
@@ -20,17 +25,12 @@ Block >> valor [
 	^ numero
 ]
 
-{ #category : 'operation' }
-Block >> ver [
-	^ { numero . color }
-]
-
-{ #category : 'instance creation' }
-Block class >> conValor: unNumero [
-	^ self new valor: unNumero
-]
-
 { #category : 'initialization' }
 Block >> valor: unNumero [
 	numero := unNumero
+]
+
+{ #category : 'operation' }
+Block >> ver [
+	^ { numero . color }
 ]
