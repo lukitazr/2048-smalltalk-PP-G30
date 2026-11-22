@@ -106,16 +106,31 @@ GUI >> mouseDown: evento [
 
 { #category : 'event handling' }
 GUI >> keyStroke: evento [
-	| tecla direccion |
+	| tecla |
 	tecla := evento keyCharacter.
-	(tecla = $r or: [ tecla = $R ]) ifTrue: [ ^ self reiniciar ].
-	direccion := tecla caseOf: {
-		[ Character arrowLeft ] -> [ #izquierda ].
-		[ Character arrowRight ] -> [ #derecha ].
-		[ Character arrowUp ] -> [ #arriba ].
-		[ Character arrowDown ] -> [ #abajo ] }
-		otherwise: [ ^ super keyStroke: evento ].
-	(reglas mover: direccion) ifTrue: [ self changed ]
+	(tecla = $r or: [ tecla = $R ]) ifTrue: [
+		self reiniciar.
+		^ true ].
+	^ super keyStroke: evento
+]
+
+{ #category : 'event handling' }
+GUI >> keyDown: evento [
+	| tecla direccion |
+	tecla := evento key.
+	direccion := self direccionParaTecla: tecla.
+	direccion ifNil: [ ^ super keyDown: evento ].
+	(reglas mover: direccion) ifTrue: [ self changed ].
+	^ true
+]
+
+{ #category : 'event handling' }
+GUI >> direccionParaTecla: tecla [
+	tecla isArrowLeft ifTrue: [ ^ #izquierda ].
+	tecla isArrowRight ifTrue: [ ^ #derecha ].
+	tecla isArrowUp ifTrue: [ ^ #arriba ].
+	tecla isArrowDown ifTrue: [ ^ #abajo ].
+	^ nil
 ]
 
 { #category : 'operation' }
