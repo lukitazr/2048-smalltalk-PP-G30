@@ -24,3 +24,13 @@ Block >> valor [
 Block >> ver [
 	^ { numero . color }
 ]
+
+{ #category : 'instance creation' }
+Block class >> conValor: unNumero [
+	^ self new valor: unNumero
+]
+
+{ #category : 'initialization' }
+Block >> valor: unNumero [
+	numero := unNumero
+]

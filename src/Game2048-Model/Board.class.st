@@ -1,41 +1,55 @@
 Class {
 	#name : 'Board',
 	#superclass : 'Object',
-	#instVars : [
-		'board'
-	],
+	#instVars : [ 'board' ],
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
 }
 
 { #category : 'initialization' }
 Board >> initialize [
-	board := {
-		{0 . 0 . 0 . 0} .
-		{0 . 0 . 0 . 0} .
-		{0 . 0 . 0 . 0} .
-		{0 . 0 . 0 . 0} 
-	}
+	super initialize.
+	board := (1 to: 4) collect: [ :fila | Array new: 4 withAll: 0 ]
+]
+
+{ #category : 'accessing' }
+Board >> size [
+	^ board size
+]
+
+{ #category : 'accessing' }
+Board >> ver [
+	^ board collect: [ :fila | fila copy ]
+]
+
+{ #category : 'accessing' }
+Board >> valorEn: posicion [
+	^ (board at: posicion x) at: posicion y
+]
+
+{ #category : 'accessing' }
+Board >> valor: unNumero en: posicion [
+	(board at: posicion x) at: posicion y put: unNumero
 ]
 
 { #category : 'operation' }
 Board >> insertarBloque: unBloque posicion: tuplaPosicion [
-	|x y|
-	x := tuplaPosicion first. 
-	y := tuplaPosicion last.
-	((x >= 1) and: (x <= board size ))ifFalse: [  
-		^ 'Error: posición X inválida.'	
-	].
-		
-	((y >= 1) and: y <= ((board at: x) size)) ifFalse: [ 
-		^ 'Error: posición Y inválida.'
-	].
-
-	(board at: x) at: y put: unBloque valor.
-	
+	| fila columna posicion |
+	fila := tuplaPosicion first.
+	columna := tuplaPosicion last.
+	(fila between: 1 and: self size) ifFalse: [ ^ 'Error: posición X inválida.' ].
+	(columna between: 1 and: self size) ifFalse: [ ^ 'Error: posición Y inválida.' ].
+	posicion := fila @ columna.
+	(self valorEn: posicion) = 0 ifFalse: [ ^ 'Error: posición ocupada.' ].
+	self valor: unBloque valor en: posicion
 ]
 
-{ #category : 'operation' }
-Board >> ver [
-	^ board
+{ #category : 'accessing' }
+Board >> posicionesVacias [
+	| vacias |
+	vacias := OrderedCollection new.
+	1 to: self size do: [ :fila |
+		1 to: self size do: [ :columna |
+			(self valorEn: fila @ columna) = 0 ifTrue: [ vacias add: fila @ columna ] ] ].
+	^ vacias
 ]
