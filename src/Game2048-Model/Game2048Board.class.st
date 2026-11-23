@@ -17,8 +17,3 @@ Game2048Board >> initialize [
 		#(0 0 0 0)
 	)
 ]
-
-{ #category : 'operation' }
-Game2048Board >> ver [
-	^ board
-]
