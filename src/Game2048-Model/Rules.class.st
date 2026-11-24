@@ -28,8 +28,7 @@ Rules >> agregarFicha [
 	vacias ifEmpty: [ ^ self ].
 	valor := (azar nextInteger: 10) = 1 ifTrue: [ 4 ] ifFalse: [ 2 ].
 	posicion := vacias at: (azar nextInteger: vacias size).
-	board insertarBloque: (Block conValor: valor)
-		posicion: { posicion x. posicion y }
+	board valor: valor en: posicion
 ]
 
 { #category : 'accessing' }

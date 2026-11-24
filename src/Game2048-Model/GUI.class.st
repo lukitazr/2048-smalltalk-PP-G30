@@ -28,11 +28,6 @@ GUI class >> abrir [
 ]
 
 { #category : 'instance creation' }
-GUI class >> abrirConEscala: unaEscala [
-	^ self abrirConTamanio: Board tamanioPorDefecto escala: unaEscala
-]
-
-{ #category : 'instance creation' }
 GUI class >> abrirConTamanio: unTamanio [
 	^ self abrirConTamanio: unTamanio escala: 1
 ]
