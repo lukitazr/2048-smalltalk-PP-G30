@@ -81,7 +81,8 @@ GUI >> anchoBase [
 GUI >> areaFlecha: direccion [
 	| centroX yBase desplazamiento |
 	centroX := self anchoBase // 2.
-	yBase := 108 + (90 * self tamanio).
+	"El tablero termina en 92 + (90 * tamanio); deja 14 px de separacion y ubica los controles debajo"
+	yBase := 92 + (90 * self tamanio) + 14.
 	desplazamiento := direccion caseOf: {
 		[ #arriba ] -> [ (centroX - 21) @ (yBase - 48) ].
 		[ #izquierda ] -> [ (centroX - 69) @ yBase ].
@@ -248,19 +249,6 @@ GUI >> duracionAnimacionBoton [
 	^ 180
 ]
 
-{ #category : 'operation' }
-GUI >> elegirTamanio [
-	| menu |
-	menu := MenuMorph new.
-	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
-		menu
-			add: tamanio asString, ' x ', tamanio asString
-			target: self
-			selector: #cambiarTamanioA:
-			argument: tamanio ].
-	menu popUpInWorld
-]
-
 { #category : 'accessing' }
 GUI >> escala [
 	^ escala
@@ -365,11 +353,13 @@ GUI >> margenTableroBase [
 
 { #category : 'event handling' }
 GUI >> mouseDown: evento [
+	| posicion |
+	posicion := evento position.
 	evento hand newKeyboardFocus: self.
-	(self areaReinicio containsPoint: evento position) ifTrue: [ ^ self reiniciar ].
-	(self areaTamanio containsPoint: evento position) ifTrue: [ ^ self elegirTamanio ].
+	(self areaReinicio containsPoint: posicion) ifTrue: [ ^ self reiniciar ].
+	(self areaTamanio containsPoint: posicion) ifTrue: [ ^ self elegirTamanio ].
 	#(#arriba #izquierda #abajo #derecha) do: [ :direccion |
-		(self areaFlecha: direccion) containsPoint: evento position ifTrue: [ ^ self mover: direccion ] ]
+		(self areaFlecha: direccion) containsPoint: posicion ifTrue: [ ^ self mover: direccion ] ]
 ]
 
 { #category : 'operation' }
@@ -414,6 +404,7 @@ GUI >> reajustarVentana [
 GUI >> reiniciar [
 	trayectorias := nil.
 	direccionPendiente := nil.
+	direccionAnimada := nil.
 	self stopStepping.
 	reglas reiniciar.
 	self changed
@@ -428,9 +419,9 @@ GUI >> step [
 			siguiente := direccionPendiente.
 			direccionPendiente := nil.
 			siguiente ifNotNil: [ self mover: siguiente ] ] ].
-		direccionAnimada ifNotNil: [
-			(Time millisecondsSince: inicioAnimacionBoton) >= self duracionAnimacionBoton ifTrue: [ direccionAnimada := nil ] ].
-		(trayectorias isNil and: [ direccionAnimada isNil ]) ifTrue: [ self stopStepping ].
+	direccionAnimada ifNotNil: [
+		(Time millisecondsSince: inicioAnimacionBoton) >= self duracionAnimacionBoton ifTrue: [ direccionAnimada := nil ] ].
+	(trayectorias isNil and: [ direccionAnimada isNil ]) ifTrue: [ self stopStepping ].
 	self changed
 ]
 
