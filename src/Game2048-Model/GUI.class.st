@@ -1,6 +1,6 @@
-"
-Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas mueven, R reinicia, + y - cambian el tamano del tablero.
-"
+" 
+Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas para mover, R para reiniciar.
+" 
 Class {
 	#name : 'GUI',
 	#superclass : 'Morph',
@@ -87,6 +87,11 @@ GUI >> areaReinicio [
 	^ (self bounds origin + ((self escalado: self anchoBase - 142) @ (self escalado: 26))) extent: (self escalado: 116) @ (self escalado: 36)
 ]
 
+{ #category : 'drawing' }
+GUI >> areaTamanio [
+	^ (self bounds origin + (self escalado: 144 @ 26)) extent: (self escalado: 104) @ (self escalado: 36)
+]
+
 { #category : 'operation' }
 GUI >> cambiarTamanioA: unTamanio [
 	"Cambia el tamano del tablero (empieza una partida nueva) y adapta la escala y la ventana. Si el tamano esta fuera de los limites no hace nada"
@@ -150,6 +155,19 @@ GUI >> dibujarTablero: tablero en: canvas [
 	trayectorias ifNotNil: [ self dibujarFichasEnMovimientoEn: canvas ]
 ]
 
+{ #category : 'operation' }
+GUI >> elegirTamanio [
+	| menu |
+	menu := MenuMorph new.
+	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
+		menu
+			add: tamanio asString, ' x ', tamanio asString
+			target: self
+			selector: #cambiarTamanioA:
+			argument: tamanio ].
+	menu popUpInWorld
+]
+
 { #category : 'event handling' }
 GUI >> direccionParaTecla: tecla [
 	tecla isArrowLeft ifTrue: [ ^ #izquierda ].
@@ -168,11 +186,14 @@ GUI >> drawOn: canvas [
 	canvas drawString: '2048' at: origen + ((self escalado: 20) @ (self escalado: 12)) font: fuenteTitulo color: Color white.
 	canvas drawString: ('Puntaje: ', reglas puntaje asString, '   Tablero: ', self tamanio asString, 'x', self tamanio asString)
 		at: origen + ((self escalado: 20) @ (self escalado: 60)) font: fuenteNormal color: Color white.
+	canvas fillRectangle: self areaTamanio color: (Color r: 0.20 g: 0.32 b: 0.48).
+	self dibujar: 'Tamaño' centradoEn: self areaTamanio
+		fuente: fuenteNormal color: Color white canvas: canvas.
 	canvas fillRectangle: self areaReinicio color: (Color r: 0.20 g: 0.32 b: 0.48).
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio
 		fuente: fuenteNormal color: Color white canvas: canvas.
 	self dibujarTablero: tablero en: canvas.
-	estado := 'Flechas: mover | R: reiniciar | +/-: tamaño'.
+	estado := 'Flechas: mover | R: reiniciar | Elegir tamaño: botón'.
 	trayectorias ifNil: [
 		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
 		reglas termino ifTrue: [
@@ -289,7 +310,8 @@ GUI >> margenTableroBase [
 { #category : 'event handling' }
 GUI >> mouseDown: evento [
 	evento hand newKeyboardFocus: self.
-	(self areaReinicio containsPoint: evento position) ifTrue: [ self reiniciar ]
+	(self areaReinicio containsPoint: evento position) ifTrue: [ self reiniciar ].
+	(self areaTamanio containsPoint: evento position) ifTrue: [ self elegirTamanio ]
 ]
 
 { #category : 'operation' }
