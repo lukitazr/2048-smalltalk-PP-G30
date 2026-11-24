@@ -24,7 +24,7 @@ Class {
 
 { #category : 'instance creation' }
 GUI class >> abrir [
-	^ self abrirConTamanio: Board tamanioPorDefecto escala: 1
+	^ self abrirConTamanio: Tablero tamanioPorDefecto escala: 1
 ]
 
 { #category : 'instance creation' }
@@ -196,7 +196,7 @@ GUI >> drawOn: canvas [
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio fuente: fuenteNormal color: Color white canvas: canvas.
 	self dibujarTablero: tablero en: canvas.
 	self dibujarFlechasEn: canvas.
-	estado := 'Usá las flechas del teclado o los botones para mover'.
+	estado := 'Usá las flechas o los botones para mover'.
 	trayectorias ifNil: [
 		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
 		reglas termino ifTrue: [ estado := reglas gano
@@ -219,7 +219,7 @@ GUI >> duracionAnimacionBoton [
 GUI >> elegirTamanio [
 	| menu |
 	menu := MenuMorph new.
-	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
+	Tablero tamanioMinimo to: Tablero tamanioMaximo do: [ :tamanio |
 		menu add: tamanio asString, ' x ', tamanio asString target: self selector: #cambiarTamanioA: argument: tamanio ].
 	menu popUpInWorld
 ]
@@ -274,7 +274,7 @@ GUI >> handlesMouseDown: evento [
 { #category : 'initialization' }
 GUI >> initialize [
 	super initialize.
-	reglas := Rules new.
+	reglas := Reglas new.
 	escalaDeseada := 1.
 	self color: (Color r: 0.08 g: 0.12 b: 0.17).
 	self escala: 1
