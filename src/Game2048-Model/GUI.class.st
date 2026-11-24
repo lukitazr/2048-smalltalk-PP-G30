@@ -1,6 +1,6 @@
-"
-Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas para mover, R para reiniciar.
-"
+" 
+Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas para mover, R para reiniciar y T para elegir tamano.
+" 
 Class {
 	#name : 'GUI',
 	#superclass : 'Morph',
@@ -12,6 +12,8 @@ Class {
 		'trayectorias',
 		'inicioAnimacion',
 		'direccionPendiente',
+		'direccionAnimada',
+		'inicioAnimacionBoton',
 		'escala',
 		'escalaDeseada',
 		'ventana'
@@ -63,16 +65,29 @@ GUI >> ajustarAPantalla: unaPantalla [
 
 { #category : 'layout' }
 GUI >> altoBase [
-	"Alto del morph con escala 1"
+	"Incluye el control de flechas debajo del tablero"
 
-	^ 140 + (90 * self tamanio)
+	^ 250 + (90 * self tamanio)
 ]
 
 { #category : 'layout' }
 GUI >> anchoBase [
-	"Ancho del morph con escala 1: crece con el tablero y nunca baja de 400"
+	"Ancho del morph: crece con el tablero y nunca baja de 400"
 
 	^ (40 + (90 * self tamanio)) max: 400
+]
+
+{ #category : 'drawing' }
+GUI >> areaFlecha: direccion [
+	| centroX yBase desplazamiento |
+	centroX := self anchoBase // 2.
+	yBase := 108 + (90 * self tamanio).
+	desplazamiento := direccion caseOf: {
+		[ #arriba ] -> [ (centroX - 21) @ (yBase - 48) ].
+		[ #izquierda ] -> [ (centroX - 69) @ yBase ].
+		[ #abajo ] -> [ (centroX - 21) @ yBase ].
+		[ #derecha ] -> [ (centroX + 27) @ yBase ] }.
+	^ (self bounds origin + (self escalado: desplazamiento)) extent: (self escalado: 42) @ (self escalado: 42)
 ]
 
 { #category : 'drawing' }
@@ -112,6 +127,25 @@ GUI >> dibujar: texto centradoEn: rectangulo fuente: fuente color: colorTexto ca
 	ancho := fuente widthOfString: texto.
 	punto := rectangulo center - ((ancho // 2) @ (fuente height // 2)).
 	canvas drawString: texto at: punto font: fuente color: colorTexto
+]
+
+{ #category : 'drawing' }
+GUI >> dibujarFlechasEn: canvas [
+	#(#arriba #izquierda #abajo #derecha) do: [ :direccion |
+		| area activo color simbolo |
+		area := self areaFlecha: direccion.
+		activo := direccionAnimada = direccion and: [
+			(Time millisecondsSince: inicioAnimacionBoton) < self duracionAnimacionBoton ].
+		color := activo
+			ifTrue: [ Color r: 0.30 g: 0.62 b: 0.88 ]
+			ifFalse: [ Color r: 0.20 g: 0.32 b: 0.48 ].
+		canvas fillRectangle: area color: color.
+		simbolo := direccion caseOf: {
+			[ #arriba ] -> [ '↑' ].
+			[ #izquierda ] -> [ '←' ].
+			[ #abajo ] -> [ '↓' ].
+			[ #derecha ] -> [ '→' ] }.
+		self dibujar: simbolo centradoEn: area fuente: fuenteNormal color: Color white canvas: canvas ]
 ]
 
 { #category : 'drawing' }
@@ -155,6 +189,19 @@ GUI >> dibujarTablero: tablero en: canvas [
 	trayectorias ifNotNil: [ self dibujarFichasEnMovimientoEn: canvas ]
 ]
 
+{ #category : 'operation' }
+GUI >> elegirTamanio [
+	| menu |
+	menu := MenuMorph new.
+	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
+		menu
+			add: tamanio asString, ' x ', tamanio asString
+			target: self
+			selector: #cambiarTamanioA:
+			argument: tamanio ].
+	menu popUpInWorld
+]
+
 { #category : 'event handling' }
 GUI >> direccionParaTecla: tecla [
 	tecla isArrowLeft ifTrue: [ ^ #izquierda ].
@@ -174,13 +221,14 @@ GUI >> drawOn: canvas [
 	canvas drawString: ('Puntaje: ', reglas puntaje asString, '   Tablero: ', self tamanio asString, 'x', self tamanio asString)
 		at: origen + ((self escalado: 20) @ (self escalado: 60)) font: fuenteNormal color: Color white.
 	canvas fillRectangle: self areaTamanio color: (Color r: 0.20 g: 0.32 b: 0.48).
-	self dibujar: 'Tamaño' centradoEn: self areaTamanio
+	self dibujar: 'Tamaño (T)' centradoEn: self areaTamanio
 		fuente: fuenteNormal color: Color white canvas: canvas.
 	canvas fillRectangle: self areaReinicio color: (Color r: 0.20 g: 0.32 b: 0.48).
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio
 		fuente: fuenteNormal color: Color white canvas: canvas.
 	self dibujarTablero: tablero en: canvas.
-	estado := 'SE MUEVE CON LAS FLECHAS DE DIRECCIÓN '.
+	self dibujarFlechasEn: canvas.
+	estado := 'Usá las flechas del teclado o los botones para mover'.
 	trayectorias ifNil: [
 		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
 		reglas termino ifTrue: [
@@ -193,6 +241,11 @@ GUI >> drawOn: canvas [
 { #category : 'stepping' }
 GUI >> duracionAnimacion [
 	^ 120
+]
+
+{ #category : 'stepping' }
+GUI >> duracionAnimacionBoton [
+	^ 180
 ]
 
 { #category : 'operation' }
@@ -233,7 +286,7 @@ GUI >> escalaDeseada: unNumero [
 
 { #category : 'layout' }
 GUI >> escalaMaximaPara: unaPantalla [
-	"Mayor escala con la que la ventana entra en unaPantalla (un Point), dejando 20 px de margen por lado"
+	"Mayor escala con la que la ventana entra en unaPantalla, dejando 20 px de margen por lado"
 
 	| ancho alto |
 	ancho := (unaPantalla x - 60) / self anchoBase.
@@ -291,6 +344,9 @@ GUI >> keyStroke: evento [
 	(tecla = $r or: [ tecla = $R ]) ifTrue: [
 		self reiniciar.
 		^ true ].
+	(tecla = $t or: [ tecla = $T ]) ifTrue: [
+		self elegirTamanio.
+		^ true ].
 	tecla = $+ ifTrue: [
 		self cambiarTamanioA: self tamanio + 1.
 		^ true ].
@@ -310,13 +366,19 @@ GUI >> margenTableroBase [
 { #category : 'event handling' }
 GUI >> mouseDown: evento [
 	evento hand newKeyboardFocus: self.
-	(self areaReinicio containsPoint: evento position) ifTrue: [ self reiniciar ].
-	(self areaTamanio containsPoint: evento position) ifTrue: [ self elegirTamanio ]
+	(self areaReinicio containsPoint: evento position) ifTrue: [ ^ self reiniciar ].
+	(self areaTamanio containsPoint: evento position) ifTrue: [ ^ self elegirTamanio ].
+	#(#arriba #izquierda #abajo #derecha) do: [ :direccion |
+		(self areaFlecha: direccion) containsPoint: evento position ifTrue: [ ^ self mover: direccion ] ]
 ]
 
 { #category : 'operation' }
 GUI >> mover: direccion [
 	| movimientos |
+	direccionAnimada := direccion.
+	inicioAnimacionBoton := Time millisecondClockValue.
+	self startStepping.
+	self changed.
 	trayectorias ifNotNil: [
 		direccionPendiente := direccion.
 		^ self ].
@@ -331,9 +393,9 @@ GUI >> mover: direccion [
 
 { #category : 'layout' }
 GUI >> pieBase [
-	"Posicion vertical del texto de estado con escala 1"
+	"Posicion vertical del texto de estado debajo de los botones de movimiento"
 
-	^ 98 + (90 * self tamanio)
+	^ 218 + (90 * self tamanio)
 ]
 
 { #category : 'layout' }
@@ -360,15 +422,15 @@ GUI >> reiniciar [
 { #category : 'stepping' }
 GUI >> step [
 	| siguiente |
-	trayectorias ifNil: [
-		self stopStepping.
-		^ self ].
-	(Time millisecondsSince: inicioAnimacion) >= self duracionAnimacion ifTrue: [
-		trayectorias := nil.
-		self stopStepping.
-		siguiente := direccionPendiente.
-		direccionPendiente := nil.
-		siguiente ifNotNil: [ self mover: siguiente ] ].
+	trayectorias ifNotNil: [
+		(Time millisecondsSince: inicioAnimacion) >= self duracionAnimacion ifTrue: [
+			trayectorias := nil.
+			siguiente := direccionPendiente.
+			direccionPendiente := nil.
+			siguiente ifNotNil: [ self mover: siguiente ] ] ].
+		direccionAnimada ifNotNil: [
+			(Time millisecondsSince: inicioAnimacionBoton) >= self duracionAnimacionBoton ifTrue: [ direccionAnimada := nil ] ].
+		(trayectorias isNil and: [ direccionAnimada isNil ]) ifTrue: [ self stopStepping ].
 	self changed
 ]
 
@@ -398,5 +460,5 @@ GUI >> ventana: unaVentana [
 
 { #category : 'stepping' }
 GUI >> wantsSteps [
-	^ trayectorias notNil
+	^ trayectorias notNil or: [ direccionAnimada notNil ]
 ]
