@@ -1,3 +1,6 @@
+"
+Reglas del 2048: mueve y fusiona fichas en las cuatro direcciones, lleva el puntaje, detecta la victoria (2048) y el fin de partida. Funciona con tableros de cualquier tamano valido de Board y lo conserva al reiniciar.
+"
 Class {
 	#name : 'Rules',
 	#superclass : 'Object',
@@ -10,6 +13,13 @@ Class {
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
 }
+
+{ #category : 'instance creation' }
+Rules class >> tamanio: unTamanio [
+	^ self new
+		tamanio: unTamanio;
+		yourself
+]
 
 { #category : 'private' }
 Rules >> agregarFicha [
@@ -112,11 +122,28 @@ Rules >> puntaje [
 
 { #category : 'operation' }
 Rules >> reiniciar [
-	board := Board new.
+	| tamanio |
+	tamanio := board ifNil: [ Board tamanioPorDefecto ] ifNotNil: [ board size ].
+	board := Board tamanio: tamanio.
 	puntaje := 0.
 	gano := false.
 	self agregarFicha.
 	self agregarFicha
+]
+
+{ #category : 'accessing' }
+Rules >> tamanio [
+	"Cantidad de filas (y de columnas) del tablero actual"
+
+	^ board size
+]
+
+{ #category : 'operation' }
+Rules >> tamanio: unTamanio [
+	"Cambia el tamano del tablero y empieza una partida nueva. Si el tamano es invalido lanza BoardSizeError y no modifica la partida en curso"
+
+	board := Board tamanio: unTamanio.
+	self reiniciar
 ]
 
 { #category : 'testing' }

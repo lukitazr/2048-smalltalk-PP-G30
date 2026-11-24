@@ -1,3 +1,6 @@
+"
+Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas mueven, R reinicia, + y - cambian el tamano del tablero.
+"
 Class {
 	#name : 'GUI',
 	#superclass : 'Morph',
@@ -8,7 +11,10 @@ Class {
 		'fuenteFicha',
 		'trayectorias',
 		'inicioAnimacion',
-		'direccionPendiente'
+		'direccionPendiente',
+		'escala',
+		'escalaDeseada',
+		'ventana'
 	],
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
@@ -16,28 +22,83 @@ Class {
 
 { #category : 'instance creation' }
 GUI class >> abrir [
+	^ self abrirConTamanio: Board tamanioPorDefecto escala: 1
+]
+
+{ #category : 'instance creation' }
+GUI class >> abrirConEscala: unaEscala [
+	^ self abrirConTamanio: Board tamanioPorDefecto escala: unaEscala
+]
+
+{ #category : 'instance creation' }
+GUI class >> abrirConTamanio: unTamanio [
+	^ self abrirConTamanio: unTamanio escala: 1
+]
+
+{ #category : 'instance creation' }
+GUI class >> abrirConTamanio: unTamanio escala: unaEscala [
+	"Abre el juego con un tablero de unTamanio x unTamanio. La escala se reduce si hace falta para que la ventana entre en la pantalla"
+
 	| juego ventana |
 	juego := self new.
+	juego tamanio: unTamanio.
+	juego escalaDeseada: unaEscala.
 	ventana := SystemWindow new.
 	ventana setLabel: '2048 | G30'.
 	ventana addMorph: juego frame: (0 @ 0 corner: 1 @ 1).
 	ventana openInWorld.
-	ventana extent: 420 @ 535.
+	juego ventana: ventana.
+	juego reajustarVentana.
 	ventana beUnresizeable.
 	ventana world activeHand newKeyboardFocus: juego.
 	^ ventana
 ]
 
+{ #category : 'layout' }
+GUI >> ajustarAPantalla: unaPantalla [
+	"Usa la escala deseada, reducida si hace falta para que la ventana entre en unaPantalla"
+
+	self escala: (escalaDeseada min: (self escalaMaximaPara: unaPantalla))
+]
+
+{ #category : 'layout' }
+GUI >> altoBase [
+	"Alto del morph con escala 1"
+
+	^ 140 + (90 * self tamanio)
+]
+
+{ #category : 'layout' }
+GUI >> anchoBase [
+	"Ancho del morph con escala 1: crece con el tablero y nunca baja de 400"
+
+	^ (40 + (90 * self tamanio)) max: 400
+]
+
 { #category : 'drawing' }
 GUI >> areaFichaFila: fila columna: columna [
 	| desplazamiento |
-	desplazamiento := (20 + ((columna - 1) * 90)) @ (92 + ((fila - 1) * 90)).
-	^ (self bounds origin + desplazamiento) extent: 84 @ 84
+	desplazamiento := (self escalado: self margenTableroBase + ((columna - 1) * 90)) @ (self escalado: 92 + ((fila - 1) * 90)).
+	^ (self bounds origin + desplazamiento) extent: (self escalado: 84) @ (self escalado: 84)
 ]
 
 { #category : 'drawing' }
 GUI >> areaReinicio [
-	^ (self bounds origin + (258 @ 26)) extent: 116 @ 36
+	^ (self bounds origin + ((self escalado: self anchoBase - 142) @ (self escalado: 26))) extent: (self escalado: 116) @ (self escalado: 36)
+]
+
+{ #category : 'operation' }
+GUI >> cambiarTamanioA: unTamanio [
+	"Cambia el tamano del tablero (empieza una partida nueva) y adapta la escala y la ventana. Si el tamano esta fuera de los limites no hace nada"
+
+	[ reglas tamanio: unTamanio ]
+		on: BoardSizeError
+		do: [ :error | ^ self ].
+	trayectorias := nil.
+	direccionPendiente := nil.
+	self stopStepping.
+	self reajustarVentana.
+	self changed
 ]
 
 { #category : 'drawing' }
@@ -104,26 +165,73 @@ GUI >> drawOn: canvas [
 	super drawOn: canvas.
 	origen := self bounds origin.
 	tablero := reglas board.
-	canvas drawString: '2048' at: origen + (20 @ 12) font: fuenteTitulo color: Color white.
-	canvas drawString: ('Puntaje: ', reglas puntaje asString)
-		at: origen + (20 @ 60) font: fuenteNormal color: Color white.
+	canvas drawString: '2048' at: origen + ((self escalado: 20) @ (self escalado: 12)) font: fuenteTitulo color: Color white.
+	canvas drawString: ('Puntaje: ', reglas puntaje asString, '   Tablero: ', self tamanio asString, 'x', self tamanio asString)
+		at: origen + ((self escalado: 20) @ (self escalado: 60)) font: fuenteNormal color: Color white.
 	canvas fillRectangle: self areaReinicio color: (Color r: 0.20 g: 0.32 b: 0.48).
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio
 		fuente: fuenteNormal color: Color white canvas: canvas.
 	self dibujarTablero: tablero en: canvas.
-	estado := 'Usá las flechas para mover las fichas.'.
+	estado := 'Flechas: mover | R: reiniciar | +/-: tamaño'.
 	trayectorias ifNil: [
 		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
 		reglas termino ifTrue: [
 			estado := reglas gano
 				ifTrue: [ 'Llegaste a 2048. Partida terminada.' ]
 				ifFalse: [ 'Sin movimientos. Reiniciá para volver a jugar.' ] ] ].
-	canvas drawString: estado at: origen + (20 @ 458) font: fuenteNormal color: Color white
+	canvas drawString: estado at: origen + ((self escalado: 20) @ (self escalado: self pieBase)) font: fuenteNormal color: Color white
 ]
 
 { #category : 'stepping' }
 GUI >> duracionAnimacion [
 	^ 120
+]
+
+{ #category : 'accessing' }
+GUI >> escala [
+	^ escala
+]
+
+{ #category : 'layout' }
+GUI >> escala: unNumero [
+	"Aplica la escala (1 = tamano original): ajusta las fuentes y el tamano del morph"
+
+	escala := unNumero.
+	fuenteTitulo := LogicalFont familyName: 'Source Sans Pro' pointSize: ((self escalado: 32) max: 6).
+	fuenteNormal := LogicalFont familyName: 'Source Sans Pro' pointSize: ((self escalado: 14) max: 6).
+	fuenteFicha := LogicalFont familyName: 'Source Sans Pro' pointSize: ((self escalado: 24) max: 6).
+	self extent: (self escalado: self anchoBase) @ (self escalado: self altoBase)
+]
+
+{ #category : 'accessing' }
+GUI >> escalaDeseada: unNumero [
+	"Escala pedida por el jugador (1 = tamano original). La escala efectiva puede ser menor si no entra en la pantalla"
+
+	escalaDeseada := unNumero max: 0.2
+]
+
+{ #category : 'layout' }
+GUI >> escalaMaximaPara: unaPantalla [
+	"Mayor escala con la que la ventana entra en unaPantalla (un Point), dejando 20 px de margen por lado"
+
+	| ancho alto |
+	ancho := (unaPantalla x - 60) / self anchoBase.
+	alto := (unaPantalla y - 75) / self altoBase.
+	^ (ancho min: alto) asFloat max: 0.2
+]
+
+{ #category : 'layout' }
+GUI >> escalado: unNumero [
+	"Convierte una medida en pixeles con escala 1 a la escala actual"
+
+	^ (unNumero * escala) rounded
+]
+
+{ #category : 'layout' }
+GUI >> extentVentana [
+	"Tamano de la ventana que contiene al juego con la escala actual"
+
+	^ ((self escalado: self anchoBase) + 20) @ ((self escalado: self altoBase) + 35)
 ]
 
 { #category : 'event handling' }
@@ -140,11 +248,9 @@ GUI >> handlesMouseDown: evento [
 GUI >> initialize [
 	super initialize.
 	reglas := Rules new.
-	fuenteTitulo := LogicalFont familyName: 'Source Sans Pro' pointSize: 32.
-	fuenteNormal := LogicalFont familyName: 'Source Sans Pro' pointSize: 14.
-	fuenteFicha := LogicalFont familyName: 'Source Sans Pro' pointSize: 24.
+	escalaDeseada := 1.
 	self color: (Color r: 0.08 g: 0.12 b: 0.17).
-	self extent: 400 @ 500
+	self escala: 1
 ]
 
 { #category : 'event handling' }
@@ -164,7 +270,20 @@ GUI >> keyStroke: evento [
 	(tecla = $r or: [ tecla = $R ]) ifTrue: [
 		self reiniciar.
 		^ true ].
+	tecla = $+ ifTrue: [
+		self cambiarTamanioA: self tamanio + 1.
+		^ true ].
+	tecla = $- ifTrue: [
+		self cambiarTamanioA: self tamanio - 1.
+		^ true ].
 	^ super keyStroke: evento
+]
+
+{ #category : 'layout' }
+GUI >> margenTableroBase [
+	"Margen izquierdo del tablero con escala 1: lo deja centrado"
+
+	^ (self anchoBase - (90 * self tamanio)) // 2
 ]
 
 { #category : 'event handling' }
@@ -186,6 +305,25 @@ GUI >> mover: direccion [
 	inicioAnimacion := Time millisecondClockValue.
 	self startStepping.
 	self changed
+]
+
+{ #category : 'layout' }
+GUI >> pieBase [
+	"Posicion vertical del texto de estado con escala 1"
+
+	^ 98 + (90 * self tamanio)
+]
+
+{ #category : 'layout' }
+GUI >> reajustarVentana [
+	"Adapta la escala y la ventana al tamano actual del tablero y a la pantalla, y centra la ventana"
+
+	| mundo |
+	mundo := self world ifNil: [ ^ self escala: escalaDeseada ].
+	self ajustarAPantalla: mundo extent.
+	ventana ifNotNil: [
+		ventana extent: self extentVentana.
+		ventana position: ((mundo extent - ventana extent // 2) max: 0 @ 0) ]
 ]
 
 { #category : 'operation' }
@@ -215,6 +353,25 @@ GUI >> step [
 { #category : 'stepping' }
 GUI >> stepTime [
 	^ 16
+]
+
+{ #category : 'accessing' }
+GUI >> tamanio [
+	"Cantidad de filas (y de columnas) del tablero"
+
+	^ reglas tamanio
+]
+
+{ #category : 'accessing' }
+GUI >> tamanio: unTamanio [
+	"Cambia el tamano del tablero sin tocar la ventana. Lanza BoardSizeError si esta fuera de los limites"
+
+	reglas tamanio: unTamanio
+]
+
+{ #category : 'accessing' }
+GUI >> ventana: unaVentana [
+	ventana := unaVentana
 ]
 
 { #category : 'stepping' }

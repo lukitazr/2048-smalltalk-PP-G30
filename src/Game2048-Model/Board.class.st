@@ -1,3 +1,6 @@
+"
+Tablero cuadrado del 2048. Guarda el valor de cada casilla (0 = vacia). Su tamano es configurable entre tamanioMinimo y tamanioMaximo (por defecto 4); un tamano invalido lanza BoardSizeError.
+"
 Class {
 	#name : 'Board',
 	#superclass : 'Object',
@@ -8,10 +11,48 @@ Class {
 	#package : 'Game2048-Model'
 }
 
+{ #category : 'instance creation' }
+Board class >> tamanio: unTamanio [
+	"Crea un tablero vacio de unTamanio x unTamanio. Lanza BoardSizeError si esta fuera de los limites"
+
+	^ self new
+		inicializarConTamanio: unTamanio;
+		yourself
+]
+
+{ #category : 'limits' }
+Board class >> tamanioMaximo [
+	"Mayor tamano de tablero permitido"
+
+	^ 8
+]
+
+{ #category : 'limits' }
+Board class >> tamanioMinimo [
+	"Menor tamano de tablero permitido"
+
+	^ 3
+]
+
+{ #category : 'limits' }
+Board class >> tamanioPorDefecto [
+	^ 4
+]
+
+{ #category : 'initialization' }
+Board >> inicializarConTamanio: unTamanio [
+	"Deja el tablero vacio con unTamanio filas y columnas. Si el tamano esta fuera de los limites no modifica nada y lanza BoardSizeError"
+
+	(unTamanio isInteger and: [ unTamanio between: self class tamanioMinimo and: self class tamanioMaximo ])
+		ifFalse: [
+			^ BoardSizeError signal: 'El tamaño del tablero debe ser un entero entre ', self class tamanioMinimo printString, ' y ', self class tamanioMaximo printString ].
+	board := (1 to: unTamanio) collect: [ :fila | Array new: unTamanio withAll: 0 ]
+]
+
 { #category : 'initialization' }
 Board >> initialize [
 	super initialize.
-	board := (1 to: 4) collect: [ :fila | Array new: 4 withAll: 0 ]
+	self inicializarConTamanio: self class tamanioPorDefecto
 ]
 
 { #category : 'operation' }
