@@ -1,6 +1,6 @@
-" 
+"
 Tablero cuadrado del 2048. Guarda el valor de cada casilla (0 = vacia). Su tamano es configurable entre tamanioMinimo y tamanioMaximo (por defecto 4); un tamano invalido lanza BoardSizeError.
-" 
+"
 Class {
 	#name : 'Board',
 	#superclass : 'Object',

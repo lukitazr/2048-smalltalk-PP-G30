@@ -1,6 +1,6 @@
-" 
+"
 Interfaz Morphic del 2048. Dibuja el tablero de Rules con medidas que escalan segun el tamano del tablero y la pantalla (la escala nunca hace que la ventana se pase de la pantalla). Teclas: flechas para mover, R para reiniciar.
-" 
+"
 Class {
 	#name : 'GUI',
 	#superclass : 'Morph',
@@ -155,19 +155,6 @@ GUI >> dibujarTablero: tablero en: canvas [
 	trayectorias ifNotNil: [ self dibujarFichasEnMovimientoEn: canvas ]
 ]
 
-{ #category : 'operation' }
-GUI >> elegirTamanio [
-	| menu |
-	menu := MenuMorph new.
-	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
-		menu
-			add: tamanio asString, ' x ', tamanio asString
-			target: self
-			selector: #cambiarTamanioA:
-			argument: tamanio ].
-	menu popUpInWorld
-]
-
 { #category : 'event handling' }
 GUI >> direccionParaTecla: tecla [
 	tecla isArrowLeft ifTrue: [ ^ #izquierda ].
@@ -193,7 +180,7 @@ GUI >> drawOn: canvas [
 	self dibujar: 'Reiniciar (R)' centradoEn: self areaReinicio
 		fuente: fuenteNormal color: Color white canvas: canvas.
 	self dibujarTablero: tablero en: canvas.
-	estado := 'Flechas: mover | R: reiniciar | Elegir tamaño: botón'.
+	estado := 'SE MUEVE CON LAS FLECHAS DE DIRECCIÓN '.
 	trayectorias ifNil: [
 		reglas gano ifTrue: [ estado := 'Llegaste a 2048. Podés seguir jugando.' ].
 		reglas termino ifTrue: [
@@ -206,6 +193,19 @@ GUI >> drawOn: canvas [
 { #category : 'stepping' }
 GUI >> duracionAnimacion [
 	^ 120
+]
+
+{ #category : 'operation' }
+GUI >> elegirTamanio [
+	| menu |
+	menu := MenuMorph new.
+	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
+		menu
+			add: tamanio asString, ' x ', tamanio asString
+			target: self
+			selector: #cambiarTamanioA:
+			argument: tamanio ].
+	menu popUpInWorld
 ]
 
 { #category : 'accessing' }
