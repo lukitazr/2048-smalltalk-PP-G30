@@ -1,4 +1,6 @@
-"Interfaz Morphic del 2048 con controles de teclado y mouse."
+"
+Interfaz Morphic del 2048 con controles de teclado y mouse.
+"
 Class {
 	#name : 'GUI',
 	#superclass : 'Morph',
@@ -68,23 +70,23 @@ GUI >> anchoBase [
 ]
 
 { #category : 'drawing' }
+GUI >> areaFichaFila: fila columna: columna [
+	| desplazamiento |
+	desplazamiento := (self escalado: self margenTableroBase + ((columna - 1) * 90)) @ (self escalado: 92 + ((fila - 1) * 90)).
+	^ (self bounds origin + desplazamiento) extent: (self escalado: 84) @ (self escalado: 84)
+]
+
+{ #category : 'drawing' }
 GUI >> areaFlecha: direccion [
 	| centroX yBase desplazamiento |
 	centroX := self anchoBase // 2.
-	yBase := 92 + (90 * self tamanio) + 14.
+	yBase := 92 + (90 * self tamanio) + 60.
 	desplazamiento := direccion caseOf: {
 		[ #arriba ] -> [ (centroX - 21) @ (yBase - 48) ].
 		[ #izquierda ] -> [ (centroX - 69) @ yBase ].
 		[ #abajo ] -> [ (centroX - 21) @ yBase ].
 		[ #derecha ] -> [ (centroX + 27) @ yBase ] }.
-	^ (self bounds origin + (self escalado: desplazamiento)) extent: (self escalado: 42) @ (self escalado: 42)
-]
-
-{ #category : 'drawing' }
-GUI >> areaFichaFila: fila columna: columna [
-	| desplazamiento |
-	desplazamiento := (self escalado: self margenTableroBase + ((columna - 1) * 90)) @ (self escalado: 92 + ((fila - 1) * 90)).
-	^ (self bounds origin + desplazamiento) extent: (self escalado: 84) @ (self escalado: 84)
+	^ (self bounds origin + (self escalado: desplazamiento)) extent: (self escalado: 46) @ (self escalado: 46)
 ]
 
 { #category : 'drawing' }
@@ -119,25 +121,6 @@ GUI >> dibujar: texto centradoEn: rectangulo fuente: fuente color: colorTexto ca
 ]
 
 { #category : 'drawing' }
-GUI >> dibujarFlechasEn: canvas [
-	#(#arriba #izquierda #abajo #derecha) do: [ :direccion |
-		| area activo color simbolo |
-		area := self areaFlecha: direccion.
-		activo := direccionAnimada = direccion and: [
-			inicioAnimacionBoton notNil and: [ (Time millisecondClockValue - inicioAnimacionBoton) < self duracionAnimacionBoton ] ].
-		color := activo
-			ifTrue: [ Color r: 0.30 g: 0.62 b: 0.88 ]
-			ifFalse: [ Color r: 0.20 g: 0.32 b: 0.48 ].
-		canvas fillRectangle: area color: color.
-		simbolo := direccion caseOf: {
-			[ #arriba ] -> [ '↑' ].
-			[ #izquierda ] -> [ '←' ].
-			[ #abajo ] -> [ '↓' ].
-			[ #derecha ] -> [ '→' ] }.
-		self dibujar: simbolo centradoEn: area fuente: fuenteNormal color: Color white canvas: canvas ]
-]
-
-{ #category : 'drawing' }
 GUI >> dibujarFicha: valor en: rectangulo canvas: canvas [
 	| fondo |
 	fondo := valor = 0
@@ -164,6 +147,25 @@ GUI >> dibujarFichasEnMovimientoEn: canvas [
 ]
 
 { #category : 'drawing' }
+GUI >> dibujarFlechasEn: canvas [
+	#(#arriba #izquierda #abajo #derecha) do: [ :direccion |
+		| area activo color simbolo |
+		area := self areaFlecha: direccion.
+		activo := direccionAnimada = direccion and: [
+			inicioAnimacionBoton notNil and: [ (Time millisecondClockValue - inicioAnimacionBoton) < self duracionAnimacionBoton ] ].
+		color := activo
+			ifTrue: [ Color r: 0.30 g: 0.62 b: 0.88 ]
+			ifFalse: [ Color r: 0.20 g: 0.32 b: 0.48 ].
+		canvas fillRectangle: area color: color.
+		simbolo := direccion caseOf: {
+			[ #arriba ] -> [ '↑' ].
+			[ #izquierda ] -> [ '←' ].
+			[ #abajo ] -> [ '↓' ].
+			[ #derecha ] -> [ '→' ] }.
+		self dibujar: simbolo centradoEn: area fuente: fuenteNormal color: Color white canvas: canvas ]
+]
+
+{ #category : 'drawing' }
 GUI >> dibujarTablero: tablero en: canvas [
 	1 to: tablero size do: [ :fila |
 		1 to: tablero size do: [ :columna |
@@ -173,15 +175,6 @@ GUI >> dibujarTablero: tablero en: canvas [
 				ifNotNil: [ 0 ].
 			self dibujarFicha: valor en: (self areaFichaFila: fila columna: columna) canvas: canvas ] ].
 	trayectorias ifNotNil: [ self dibujarFichasEnMovimientoEn: canvas ]
-]
-
-{ #category : 'operation' }
-GUI >> elegirTamanio [
-	| menu |
-	menu := MenuMorph new.
-	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
-		menu add: tamanio asString, ' x ', tamanio asString target: self selector: #cambiarTamanioA: argument: tamanio ].
-	menu popUpInWorld
 ]
 
 { #category : 'event handling' }
@@ -225,6 +218,15 @@ GUI >> duracionAnimacion [
 { #category : 'stepping' }
 GUI >> duracionAnimacionBoton [
 	^ 180
+]
+
+{ #category : 'operation' }
+GUI >> elegirTamanio [
+	| menu |
+	menu := MenuMorph new.
+	Board tamanioMinimo to: Board tamanioMaximo do: [ :tamanio |
+		menu add: tamanio asString, ' x ', tamanio asString target: self selector: #cambiarTamanioA: argument: tamanio ].
+	menu popUpInWorld
 ]
 
 { #category : 'accessing' }
