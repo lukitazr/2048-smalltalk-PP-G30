@@ -1,11 +1,11 @@
 "
-Reglas del 2048: mueve y fusiona fichas en las cuatro direcciones, lleva el puntaje, detecta la victoria (2048) y el fin de partida. Funciona con tableros de cualquier tamano valido de Board y lo conserva al reiniciar.
+Reglas del 2048: mueve y fusiona fichas en las cuatro direcciones, lleva el puntaje, detecta la victoria (2048) y el fin de partida. Funciona con tableros de cualquier tamano válido de Tablero y lo conserva al reiniciar.
 "
 Class {
 	#name : 'Reglas',
 	#superclass : 'Object',
 	#instVars : [
-		'board',
+		'tablero',
 		'puntaje',
 		'gano',
 		'azar'
@@ -24,16 +24,16 @@ Reglas class >> tamanio: unTamanio [
 { #category : 'private' }
 Reglas >> agregarFicha [
 	| vacias valor posicion |
-	vacias := board posicionesVacias.
+	vacias := tablero posicionesVacias.
 	vacias ifEmpty: [ ^ self ].
 	valor := (azar nextInteger: 10) = 1 ifTrue: [ 4 ] ifFalse: [ 2 ].
 	posicion := vacias at: (azar nextInteger: vacias size).
-	board valor: valor en: posicion
+	tablero valor: valor en: posicion
 ]
 
 { #category : 'accessing' }
-Reglas >> board [
-	^ board
+Reglas >> tablero [
+	^ tablero
 ]
 
 { #category : 'private' }
@@ -81,9 +81,9 @@ Reglas >> mover: direccion registrando: registrarFicha [
 	| cambio posiciones original resultado valores |
 	(#(izquierda derecha arriba abajo) includes: direccion) ifFalse: [ ^ false ].
 	cambio := false.
-	1 to: board size do: [ :indice |
+	1 to: tablero tamanio do: [ :indice |
 		posiciones := self posicionesDeLinea: indice direccion: direccion.
-		original := posiciones collect: [ :posicion | board valorEn: posicion ].
+		original := posiciones collect: [ :posicion | tablero valorEn: posicion ].
 		resultado := self combinar: original.
 		valores := resultado first.
 		registrarFicha ifNotNil: [
@@ -97,8 +97,8 @@ Reglas >> mover: direccion registrando: registrarFicha [
 			cambio := true.
 			puntaje := puntaje + resultado second.
 			(valores includes: 2048) ifTrue: [ gano := true ].
-			1 to: board size do: [ :i |
-				board valor: (valores at: i) en: (posiciones at: i) ] ] ].
+			1 to: tablero tamanio do: [ :i |
+				tablero valor: (valores at: i) en: (posiciones at: i) ] ] ].
 	cambio ifTrue: [ self agregarFicha ].
 	^ cambio
 ]
@@ -106,7 +106,7 @@ Reglas >> mover: direccion registrando: registrarFicha [
 { #category : 'private' }
 Reglas >> posicionesDeLinea: indice direccion: direccion [
 	| indices |
-	indices := (1 to: board size) asArray.
+	indices := (1 to: tablero tamanio) asArray.
 	^ direccion caseOf: {
 		[ #izquierda ] -> [ indices collect: [ :columna | indice @ columna ] ].
 		[ #derecha ] -> [ indices reversed collect: [ :columna | indice @ columna ] ].
@@ -122,8 +122,8 @@ Reglas >> puntaje [
 { #category : 'operation' }
 Reglas >> reiniciar [
 	| tamanio |
-	tamanio := board ifNil: [ Tablero tamanioPorDefecto ] ifNotNil: [ board size ].
-	board := Tablero tamanio: tamanio.
+	tamanio := tablero ifNil: [ Tablero tamanioPorDefecto ] ifNotNil: [ tablero tamanio ].
+	tablero := Tablero tamanio: tamanio.
 	puntaje := 0.
 	gano := false.
 	self agregarFicha.
@@ -134,23 +134,23 @@ Reglas >> reiniciar [
 Reglas >> tamanio [
 	"Cantidad de filas (y de columnas) del tablero actual"
 
-	^ board size
+	^ tablero tamanio
 ]
 
 { #category : 'operation' }
 Reglas >> tamanio: unTamanio [
-	"Cambia el tamano del tablero y empieza una partida nueva. Si el tamano es invalido lanza BoardSizeError y no modifica la partida en curso"
+	"Cambia el tamano del tablero y empieza una partida nueva. Si el tamano es invalido lanza ErrorTamanioTablero y no modifica la partida en curso"
 
-	board := Tablero tamanio: unTamanio.
+	tablero := Tablero tamanio: unTamanio.
 	self reiniciar
 ]
 
 { #category : 'testing' }
 Reglas >> termino [
 	^ (#(izquierda derecha arriba abajo) anySatisfy: [ :direccion |
-		(1 to: board size) anySatisfy: [ :indice |
+		(1 to: tablero tamanio) anySatisfy: [ :indice |
 			| original |
 			original := (self posicionesDeLinea: indice direccion: direccion)
-				collect: [ :posicion | board valorEn: posicion ].
+				collect: [ :posicion | tablero valorEn: posicion ].
 			original ~= (self combinar: original) first ] ]) not
 ]

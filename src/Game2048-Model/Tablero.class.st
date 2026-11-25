@@ -1,11 +1,11 @@
 "
-Tablero cuadrado del 2048. Guarda el valor de cada casilla (0 = vacia). Su tamano es configurable entre tamanioMinimo y tamanioMaximo (por defecto 4); un tamano invalido lanza BoardSizeError.
+Tablero cuadrado del 2048. Guarda el valor de cada casilla (0 = vacia). Su tamano es configurable entre tamanioMinimo y tamanioMaximo (por defecto 4); un tamano invalido lanza ErrorTamanioTablero.
 "
 Class {
 	#name : 'Tablero',
 	#superclass : 'Object',
 	#instVars : [
-		'board'
+		'matriz'
 	],
 	#category : 'Game2048-Model',
 	#package : 'Game2048-Model'
@@ -13,7 +13,7 @@ Class {
 
 { #category : 'instance creation' }
 Tablero class >> tamanio: unTamanio [
-	"Crea un tablero vacio de unTamanio x unTamanio. Lanza BoardSizeError si esta fuera de los limites"
+	"Crea un tablero vacio de unTamanio x unTamanio. Lanza ErrorTamanioTablero si esta fuera de los limites"
 
 	^ self new
 		inicializarConTamanio: unTamanio;
@@ -41,12 +41,12 @@ Tablero class >> tamanioPorDefecto [
 
 { #category : 'initialization' }
 Tablero >> inicializarConTamanio: unTamanio [
-	"Deja el tablero vacio con unTamanio filas y columnas. Si el tamano esta fuera de los limites no modifica nada y lanza BoardSizeError"
+	"Deja el tablero vacio con unTamanio filas y columnas. Si el tamano esta fuera de los limites no modifica nada y lanza ErrorTamanioTablero"
 
 	(unTamanio isInteger and: [ unTamanio between: self class tamanioMinimo and: self class tamanioMaximo ])
 		ifFalse: [
-			^ BoardSizeError signal: 'El tamaño del tablero debe ser un entero entre ', self class tamanioMinimo printString, ' y ', self class tamanioMaximo printString ].
-	board := (1 to: unTamanio) collect: [ :fila | Array new: unTamanio withAll: 0 ]
+			^ ErrorTamanioTablero signal: 'El tamaño del tablero debe ser un entero entre ', self class tamanioMinimo printString, ' y ', self class tamanioMaximo printString ].
+	matriz := (1 to: unTamanio) collect: [ :fila | Array new: unTamanio withAll: 0 ]
 ]
 
 { #category : 'initialization' }
@@ -59,28 +59,28 @@ Tablero >> initialize [
 Tablero >> posicionesVacias [
 	| vacias |
 	vacias := OrderedCollection new.
-	1 to: self size do: [ :fila |
-		1 to: self size do: [ :columna |
+	1 to: self tamanio do: [ :fila |
+		1 to: self tamanio do: [ :columna |
 			(self valorEn: fila @ columna) = 0 ifTrue: [ vacias add: fila @ columna ] ] ].
 	^ vacias
 ]
 
 { #category : 'accessing' }
-Tablero >> size [
-	^ board size
+Tablero >> tamanio [
+	^ matriz size
 ]
 
 { #category : 'accessing' }
 Tablero >> valor: unNumero en: posicion [
-	(board at: posicion x) at: posicion y put: unNumero
+	(matriz at: posicion x) at: posicion y put: unNumero
 ]
 
 { #category : 'accessing' }
 Tablero >> valorEn: posicion [
-	^ (board at: posicion x) at: posicion y
+	^ (matriz at: posicion x) at: posicion y
 ]
 
 { #category : 'accessing' }
 Tablero >> ver [
-	^ board collect: [ :fila | fila copy ]
+	^ matriz collect: [ :fila | fila copy ]
 ]
