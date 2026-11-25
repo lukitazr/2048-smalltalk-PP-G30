@@ -1,5 +1,5 @@
 "
-Se lanza cuando se pide un tablero con un tamano fuera de los limites permitidos por Board (entero entre Board tamanioMinimo y Board tamanioMaximo).
+Excepción que señala Tablero si el tamaño solicitado no es un entero dentro del rango permitido por Tablero tamanioMinimo y Tablero tamanioMaximo.
 "
 Class {
 	#name : 'BoardSizeError',
