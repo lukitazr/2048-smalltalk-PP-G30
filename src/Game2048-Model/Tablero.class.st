@@ -1,5 +1,5 @@
 "
-Tablero cuadrado del 2048. Guarda el valor de cada casilla (0 = vacia). Su tamano es configurable entre tamanioMinimo y tamanioMaximo (por defecto 4); un tamano invalido lanza ErrorTamanioTablero.
+Representa la grilla cuadrada del 2048 como una matriz de números. El cero indica una casilla vacía. El tamaño permitido va de 3 a 10 y el predeterminado es 4.
 "
 Class {
 	#name : 'Tablero',
@@ -13,7 +13,7 @@ Class {
 
 { #category : 'instance creation' }
 Tablero class >> tamanio: unTamanio [
-	"Crea un tablero vacio de unTamanio x unTamanio. Lanza ErrorTamanioTablero si esta fuera de los limites"
+	"Crea un tablero cuadrado vacío del tamaño indicado. Señala ErrorTamanioTablero si el tamaño es inválido."
 
 	^ self new
 		inicializarConTamanio: unTamanio;
@@ -22,26 +22,28 @@ Tablero class >> tamanio: unTamanio [
 
 { #category : 'limits' }
 Tablero class >> tamanioMaximo [
-	"Mayor tamano de tablero permitido"
+	"Devuelve la cantidad máxima permitida de filas y columnas."
 
 	^ 10
 ]
 
 { #category : 'limits' }
 Tablero class >> tamanioMinimo [
-	"Menor tamano de tablero permitido"
+	"Devuelve la cantidad mínima permitida de filas y columnas."
 
 	^ 3
 ]
 
 { #category : 'limits' }
 Tablero class >> tamanioPorDefecto [
+	"Devuelve la cantidad de filas y columnas que se usa al crear un tablero sin indicar el tamaño."
+
 	^ 4
 ]
 
 { #category : 'initialization' }
 Tablero >> inicializarConTamanio: unTamanio [
-	"Deja el tablero vacio con unTamanio filas y columnas. Si el tamano esta fuera de los limites no modifica nada y lanza ErrorTamanioTablero"
+	"Valida el tamaño y crea una matriz con una colección independiente de ceros por fila. Señala ErrorTamanioTablero ante un tamaño inválido y conserva la matriz anterior."
 
 	(unTamanio isInteger and: [ unTamanio between: self class tamanioMinimo and: self class tamanioMaximo ])
 		ifFalse: [
@@ -51,12 +53,16 @@ Tablero >> inicializarConTamanio: unTamanio [
 
 { #category : 'initialization' }
 Tablero >> initialize [
+	"Inicializa un tablero vacío con el tamaño predeterminado."
+
 	super initialize.
 	self inicializarConTamanio: self class tamanioPorDefecto
 ]
 
 { #category : 'accessing' }
 Tablero >> posicionesVacias [
+	"Devuelve las posiciones de las casillas con valor cero en orden de fila y columna. Cada posición tiene la forma fila @ columna."
+
 	| vacias |
 	vacias := OrderedCollection new.
 	1 to: self tamanio do: [ :fila |
@@ -67,20 +73,28 @@ Tablero >> posicionesVacias [
 
 { #category : 'accessing' }
 Tablero >> tamanio [
+	"Devuelve la cantidad de filas y columnas de la matriz cuadrada."
+
 	^ matriz size
 ]
 
 { #category : 'accessing' }
 Tablero >> valor: unNumero en: posicion [
+	"Escribe el número en la casilla indicada por fila @ columna. Ambas coordenadas empiezan en 1."
+
 	(matriz at: posicion x) at: posicion y put: unNumero
 ]
 
 { #category : 'accessing' }
 Tablero >> valorEn: posicion [
+	"Devuelve el número de la casilla indicada por fila @ columna, o cero si está vacía."
+
 	^ (matriz at: posicion x) at: posicion y
 ]
 
 { #category : 'accessing' }
 Tablero >> ver [
+	"Devuelve una copia de la matriz y de cada fila para consultar el tablero sin modificar el original."
+
 	^ matriz collect: [ :fila | fila copy ]
 ]
